@@ -46,7 +46,7 @@ Kết quả: báo cáo đồ án và website hoàn chỉnh.
 
 ## Tác giả
 
-Sinh viên thực hiện: Nguyễn Thị Trúc Lam
+Sinh viên thực hiện: Nguyễn Thị Trúc Lam 
 
 Giảng viên hướng dẫn: TS. Nguyễn Nhứt Lam
 
