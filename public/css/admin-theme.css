@@ -1,0 +1,257 @@
+/* =====================================================================
+   ADMIN THEME – đồng bộ màu & hiệu ứng trang quản trị với trang người dùng
+   Tông: XANH LÁ (chủ đạo) · VÀNG (nhấn) · XANH ĐEN (chữ tiêu đề)
+
+   Đặt tại public/css/admin-theme.css, nạp SAU thẻ <style> của mỗi trang admin:
+   <link rel="stylesheet" href="{{ asset('css/admin-theme.css') }}?v={{ filemtime(public_path('css/admin-theme.css')) }}">
+
+   Mọi luật đều có tiền tố "html" để thắng độ ưu tiên của CSS riêng trong từng trang,
+   nên không phụ thuộc thứ tự khai báo.
+   ===================================================================== */
+
+/* ===== 1. Biến màu: ghi đè bảng màu cũ (#2f9e6e...) ===== */
+html:root {
+    --green:       #2C8419;
+    --green-dark:  #1F6612;
+    --green-soft:  #EAF9CF;
+    --bg:          #FDFFF5;
+    --border:      #E1E8DC;
+    --text:        #16222A;
+    --muted:       #5F6F73;
+    --red:         #dc2626;
+
+    --card:        #FFFFFF;
+    --lime:        #8CD41C;
+    --accent:      #FFD21F;
+    --accent-dark: #F0B800;
+    --accent-soft: #FFF3B8;
+    --ink:         #0F2A30;
+    --primary:      #2C8419;
+    --primary-dark: #1F6612;
+    --primary-soft: #EAF9CF;
+}
+
+@keyframes admFadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes admPop    { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes admStripe { to { background-position: 200% 0; } }
+@keyframes admRing   { 0% { box-shadow: 0 4px 12px rgba(140, 212, 28, .45), 0 0 0 0 rgba(140, 212, 28, .6); }
+                       70%, 100% { box-shadow: 0 4px 12px rgba(140, 212, 28, .45), 0 0 0 12px rgba(140, 212, 28, 0); } }
+
+/* ===== 2. Nền trang ===== */
+html body {
+    background:
+        radial-gradient(circle at 6% 0%, rgba(140, 212, 28, .20), transparent 40%),
+        radial-gradient(circle at 94% 8%, rgba(255, 210, 31, .24), transparent 36%),
+        radial-gradient(circle at 50% 100%, rgba(140, 212, 28, .12), transparent 42%),
+        var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+}
+html ::selection { background: var(--accent); color: var(--ink); }
+html * { scrollbar-color: var(--lime) transparent; }
+
+/* ===== 3. Tiêu đề trang + breadcrumb ===== */
+html .page-head h1 {
+    color: var(--ink);
+    padding-left: 14px;
+    border-left: 5px solid;
+    border-image: linear-gradient(180deg, var(--lime), var(--accent)) 1;
+    animation: admFadeUp .5s ease both;
+}
+html .breadcrumb a { color: var(--green-dark); font-weight: 600; }
+html .page { animation: admFadeUp .5s ease both; }
+
+/* ===== 4. Thẻ (card): dải màu xanh lá – vàng chạy ở mép trên ===== */
+html .card {
+    position: relative;
+    border-color: var(--border);
+    box-shadow: 0 8px 22px rgba(15, 42, 48, .08);
+    animation: admPop .55s ease both;
+}
+html .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    border-radius: 14px 14px 0 0;
+    background: linear-gradient(90deg, var(--lime), var(--accent), var(--lime), var(--accent));
+    background-size: 200% 100%;
+    animation: admStripe 6s linear infinite;
+    pointer-events: none;
+}
+html .card-head { color: var(--ink); padding-top: 20px; }
+html .card-head:before {
+    background: linear-gradient(180deg, var(--lime), var(--accent));
+    width: 5px;
+}
+
+/* ===== 5. Bảng ===== */
+html th {
+    background: linear-gradient(180deg, #F3FADF, #EAF9CF);
+    color: var(--green-dark);
+    border-bottom: 2px solid var(--accent);
+}
+html tbody tr { transition: background .2s, box-shadow .2s; }
+html tbody tr:hover { background: var(--green-soft); box-shadow: inset 4px 0 0 var(--accent); }
+html tbody tr { animation: admFadeUp .45s ease both; }
+html tbody tr:nth-child(2) { animation-delay: .04s; }
+html tbody tr:nth-child(3) { animation-delay: .08s; }
+html tbody tr:nth-child(4) { animation-delay: .12s; }
+html tbody tr:nth-child(5) { animation-delay: .16s; }
+html tbody tr:nth-child(n+6) { animation-delay: .20s; }
+
+/* ===== 6. Thẻ nhãn (tag / chip) ===== */
+html .tag {
+    background: var(--accent-soft);
+    border: 1px solid #FFE57A;
+    color: #6B5300;
+}
+html .chip {
+    background: var(--green-soft);
+    border-color: var(--lime);
+    color: var(--green-dark);
+}
+html .chip button:hover { background: var(--green); color: #fff; }
+html .add-tag { border-color: var(--lime); color: var(--green-dark); }
+html .add-tag:hover { background: var(--accent-soft); }
+
+/* ===== 7. Nút chính: gradient xanh lá tươi → vàng, ánh sáng quét khi rê chuột ===== */
+html .btn {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #9BE02A 0%, #FFD21F 100%);
+    color: var(--ink);
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(140, 212, 28, .45);
+    transition: transform .2s, box-shadow .2s, filter .2s;
+}
+html .btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -80%;
+    width: 50%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, .55), transparent);
+    transform: skewX(-20deg);
+    transition: left .6s ease;
+    pointer-events: none;
+}
+html .btn:hover {
+    background: linear-gradient(135deg, #8CD41C 0%, #FFC700 100%);
+    color: var(--ink);
+    transform: translateY(-2px);
+    filter: saturate(1.15);
+    box-shadow: 0 8px 18px rgba(240, 184, 0, .5);
+}
+html .btn:hover::after { left: 130%; }
+
+/* Nút phụ (viền trắng) */
+html .btn.light {
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--border);
+    box-shadow: none;
+    font-weight: 600;
+}
+html .btn.light:hover {
+    background: var(--green-soft);
+    border-color: var(--lime);
+    color: var(--green-dark);
+    box-shadow: 0 4px 10px rgba(140, 212, 28, .25);
+}
+
+/* Nút nhỏ trong bảng */
+html .mini { transition: transform .2s, background .2s, color .2s, border-color .2s; }
+html .mini:hover { transform: translateY(-2px); background: var(--green-soft); border-color: var(--lime); color: var(--green-dark); }
+html .mini.approve { background: var(--green-soft); border-color: var(--lime); color: var(--green-dark); }
+html .mini.approve:hover { background: linear-gradient(135deg, #9BE02A, #FFD21F); border-color: transparent; color: var(--ink); }
+html .mini.reject { background: #fdecec; border-color: #f5c2c2; color: var(--red); }
+html .mini.reject:hover { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* ===== 8. Thông báo ===== */
+html .alert.ok { background: var(--green-soft); border: 1px solid var(--lime); color: var(--green-dark); animation: admFadeUp .4s ease both; }
+html .alert.err,
+html .alert-error { animation: admFadeUp .4s ease both; }
+
+/* ===== 9. Ô nhập liệu: viền vàng khi focus ===== */
+html .toolbar input:focus,
+html .toolbar select:focus,
+html .field input:focus,
+html .field select:focus,
+html .editor-box:focus-within {
+    outline: 3px solid rgba(255, 210, 31, .45);
+    border-color: var(--green);
+}
+html a:focus-visible,
+html button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ===== 10. Trình soạn thảo ===== */
+html .editor-toolbar { background: #F6FAEE; }
+html .editor-toolbar button:hover { background: var(--accent-soft); border-color: #FFE57A; }
+
+/* ===== 11. Hộp thoại xem chi tiết ===== */
+html dialog { animation: admPop .35s ease both; overflow: hidden; }
+html dialog::backdrop { background: rgba(15, 42, 48, .55); }
+html .modal-head {
+    color: var(--ink);
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, var(--lime), var(--accent)) 1;
+}
+html .modal-foot { background: #F6FAEE; }
+html .q-body, html .detail { background: #F6FAEE; border-left: 4px solid var(--lime); }
+
+/* ===== 12. Phân trang (Laravel) ===== */
+html .pagination-wrap [aria-current="page"] span,
+html .pagination-wrap .active span { background: linear-gradient(135deg, #9BE02A, #FFD21F) !important; color: var(--ink) !important; border-color: transparent !important; font-weight: 700; }
+
+/* ===== 13. Phân trang tùy biến (resources/views/vendor/pagination/admin.blade.php) ===== */
+html .adm-pager { display: flex; justify-content: center; margin: 24px 0 8px; }
+html .adm-pager-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+html .adm-pager-list a,
+html .adm-pager-list span {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: transform .2s, border-color .2s, color .2s, background .2s, box-shadow .2s;
+}
+html .adm-pager-list a:hover {
+    transform: translateY(-2px);
+    border-color: var(--lime);
+    color: var(--green-dark);
+    background: var(--green-soft);
+    box-shadow: 0 4px 10px rgba(140, 212, 28, .30);
+}
+html .adm-pager-list .active span {
+    background: linear-gradient(135deg, #9BE02A, #FFD21F);
+    border-color: transparent;
+    color: var(--ink);
+    font-weight: 800;
+    box-shadow: 0 6px 14px rgba(140, 212, 28, .45);
+}
+html .adm-pager-list .dots span { border-color: transparent; background: transparent; min-width: 24px; padding: 0; }
+html .adm-pager-list svg { display: block; }
+
+/* ===== Tôn trọng người dùng giảm chuyển động ===== */
+@media (prefers-reduced-motion: reduce) {
+    html *, html *::before, html *::after {
+        animation: none !important;
+        transition-duration: .01ms !important;
+    }
+}

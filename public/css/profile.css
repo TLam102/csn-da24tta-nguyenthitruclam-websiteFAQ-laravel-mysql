@@ -1,0 +1,107 @@
+/* ===== Hồ sơ cá nhân & đổi mật khẩu: cùng tone màu trang chủ ===== */
+.pf-wrap { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; }
+.gvx-main .pf-wrap { padding: 0; }
+
+.pf-layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 26px; align-items: stretch; margin: 10px 0 48px; }
+.pf-stack { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.pf-stack .pf-main { flex: 1; }
+
+.pf-card { background: #fff; border-radius: 18px; padding: 32px 34px; box-shadow: 0 4px 18px rgba(0,0,0,.08);
+    border-top: 5px solid transparent; border-image: linear-gradient(90deg, #a6e22e, #f1d62a) 1; }
+
+/* ----- Thẻ trái ----- */
+.pf-side { text-align: center; }
+.pf-avatar { width: 112px; height: 112px; margin: 4px auto 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(90deg, #a6e22e, #f1d62a); color: #1b2a1b; font-size: 46px; font-weight: 800;
+    box-shadow: 0 8px 20px rgba(166,226,46,.5); }
+.pf-side h3 { margin: 0 0 6px; font-size: 22px; color: #14532d; }
+.pf-mail { margin: 0 0 14px; color: #6f7d63; font-size: 15px; word-break: break-all; }
+.pf-role { display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 14px; font-weight: 700;
+    background: linear-gradient(120deg, #0e7a5a, #0a4a56); color: #fff; }
+
+.pf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 22px 0; }
+.pf-stats div { background: #f1f9dc; border-radius: 14px; padding: 16px 8px; }
+.pf-stats b { display: block; font-size: 30px; color: #14532d; line-height: 1.1; }
+.pf-stats span { font-size: 13px; color: #5d6b52; }
+
+.pf-menu { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; border-top: 1px solid #eef2e0; }
+.pf-menu a { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: 12px; border: 1px solid #d9e8b8;
+    color: #14532d; font-size: 15px; font-weight: 600; text-decoration: none; text-align: left; transition: .15s; }
+.pf-menu a i { color: #1a7a2e; width: 18px; text-align: center; }
+.pf-menu a:hover { background: #eef8d9; }
+.pf-menu a.active { background: linear-gradient(90deg, #a6e22e, #f1d62a); border-color: transparent; color: #1b2a1b;
+    box-shadow: 0 4px 12px rgba(166,226,46,.4); }
+.pf-menu a.active i { color: #1b2a1b; }
+
+/* ----- Biểu mẫu ----- */
+.pf-title { margin: 0 0 8px; font-size: 24px; color: #14532d; }
+.pf-title i { color: #1a7a2e; margin-right: 10px; }
+.pf-note { margin: 0 0 26px; color: #6f7d63; font-size: 15px; }
+.pf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.pf-group { margin-bottom: 22px; }
+.pf-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: #1b2a1b; }
+.pf-group .req { color: #e53935; }
+
+.pf-input { width: 100%; box-sizing: border-box; padding: 15px 16px; border: 1px solid #dfe6d0; border-radius: 12px;
+    font-size: 16px; font-family: inherit; background: #fff; outline: none; transition: .15s; }
+.pf-input:focus { border-color: #a6e22e; box-shadow: 0 0 0 4px rgba(166,226,46,.28); }
+.pf-input:disabled { background: #f6f8ef; color: #7a8570; cursor: not-allowed; }
+.pf-input.invalid { border-color: #e53935; }
+.pf-error { margin: 7px 0 0; color: #e53935; font-size: 14px; }
+
+.pf-pass { position: relative; }
+.pf-pass .pf-input { padding-right: 52px; }
+.pf-eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border: 0; background: none;
+    color: #6f7d63; cursor: pointer; border-radius: 10px; font-size: 16px; }
+.pf-eye:hover { background: #eef8d9; color: #1a7a2e; }
+
+.pf-actions { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.pf-btn { border: 0; cursor: pointer; padding: 14px 34px; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit;
+    background: linear-gradient(90deg, #a6e22e, #f1d62a); color: #1b2a1b; box-shadow: 0 4px 14px rgba(166,226,46,.45); transition: .15s; }
+.pf-btn:hover { filter: brightness(.97); transform: translateY(-1px); }
+.pf-btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 12px; border: 1px solid #cfe3a8;
+    background: #fff; color: #14532d; font-size: 15px; font-weight: 600; text-decoration: none; }
+.pf-btn-outline:hover { background: #eef8d9; }
+
+/* ----- Khung lưu ý bảo mật ----- */
+.pf-tips ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
+.pf-tips li { color: #44503a; font-size: 15px; line-height: 1.5; }
+.pf-tips li i { color: #1a7a2e; margin-right: 8px; }
+
+/* ----- Responsive ----- */
+@media (max-width: 960px) {
+    .pf-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+    .pf-row, .pf-tips ul { grid-template-columns: 1fr; }
+    .pf-card { padding: 24px 20px; }
+    .pf-wrap { padding: 0 14px; }
+}
+/* ===== Mở rộng khung, thẻ trái dồn sát trái, thẻ phải giãn đầy ===== */
+.gvx-main:has(.pf-wrap) { max-width: none; margin: 0; padding: 22px 32px 40px; }
+.container:has(.pf-wrap) { max-width: none; width: 100%; padding-left: 32px; padding-right: 32px; box-sizing: border-box; }
+
+.pf-wrap { max-width: none; width: 100%; margin: 0; padding: 0; }
+
+.pf-layout { grid-template-columns: 360px minmax(0, 1fr); gap: 28px; align-items: stretch; margin: 10px 0 40px; }
+
+/* Thẻ phải: giãn hết chiều cao, nút nằm dưới đáy */
+.pf-main { display: flex; flex-direction: column; padding: 38px 44px; }
+.pf-main form { display: flex; flex-direction: column; flex: 1; }
+.pf-main .pf-actions { margin-top: auto; padding-top: 18px; }
+
+/* Ô nhập cao và thoáng hơn */
+.pf-row { gap: 28px; }
+.pf-group { margin-bottom: 26px; }
+.pf-input { padding: 17px 18px; font-size: 16px; }
+.pf-title { font-size: 26px; }
+
+/* Thẻ trái cao đầy khung */
+.pf-side { display: flex; flex-direction: column; }
+.pf-menu { margin-top: auto; }
+
+@media (max-width: 960px) {
+    .pf-layout { grid-template-columns: 1fr; }
+    .pf-main { padding: 26px 22px; }
+    .gvx-main:has(.pf-wrap), .container:has(.pf-wrap) { padding-left: 14px; padding-right: 14px; }
+}
