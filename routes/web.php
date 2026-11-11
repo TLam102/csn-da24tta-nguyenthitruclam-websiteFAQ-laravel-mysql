@@ -105,3 +105,8 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+Route::get('/storage/{path}', function ($path) {
+    $file = public_path($path);
+    abort_unless(is_file($file), 404);
+    return response()->file($file);
+})->where('path', 'giang-vien/.*');
