@@ -85,7 +85,7 @@ class ProfileController extends Controller
     public function avatar(Request $request): RedirectResponse
     {
         $request->validateWithBag('avatar', [
-            'anh_dai_dien' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'anh_dai_dien' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [
             'anh_dai_dien.required' => 'Vui lòng chọn một ảnh.',
             'anh_dai_dien.image'    => 'File tải lên phải là ảnh.',
