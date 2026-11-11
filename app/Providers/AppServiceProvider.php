@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Providers;
+
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,12 +18,17 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-         Paginator::defaultView('vendor.pagination.admin');
+        // Ép dùng HTTPS khi chạy production (sửa lỗi Mixed Content)
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
+        Paginator::defaultView('vendor.pagination.admin');
 
         View::composer('layouts.app', function ($view) {
             $gvUnread = 0;
             $gvShowNotice = false;
-              
+
             if (Auth::check() && Auth::user()->vai_tro === 'giang_vien') {
                 $gvUnread = DB::table('cau_hoi')
                     ->where('giang_vien_id', Auth::id())
