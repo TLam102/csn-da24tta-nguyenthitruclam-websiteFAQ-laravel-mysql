@@ -27,7 +27,17 @@ class User extends Authenticatable
     /** auth()->user()->avatar_url: đường dẫn ảnh đại diện hoặc null */
     public function getAvatarUrlAttribute(): ?string
     {
-        return $this->anh_dai_dien ? asset('storage/' . $this->anh_dai_dien) : null;
+        if (! $this->anh_dai_dien) {
+            return null;
+        }
+
+        // Ảnh giảng viên có sẵn trong code: public/giang-vien/...
+        if (str_starts_with($this->anh_dai_dien, 'giang-vien/')) {
+            return asset($this->anh_dai_dien);
+        }
+
+        // Ảnh người dùng tải lên: storage/app/public/avatars/...
+        return asset('storage/' . $this->anh_dai_dien);
     }
 
     public function isQuanTri(): bool
