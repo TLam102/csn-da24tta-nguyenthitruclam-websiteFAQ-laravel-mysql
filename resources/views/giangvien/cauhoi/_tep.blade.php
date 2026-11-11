@@ -3,7 +3,7 @@
     @foreach ($files as $f)
         @php
             $ext = strtolower(pathinfo($f->ten_goc, PATHINFO_EXTENSION));
-            $url = asset('storage/' . $f->duong_dan);
+            $url = file_url($f->duong_dan);
         @endphp
 
         @if (in_array($ext, $imgExt))

@@ -160,7 +160,7 @@
                         @if ($faq->tapDinhKems->count())
                             <div class="files">
                                 @foreach ($faq->tapDinhKems as $tep)
-                                    <div>📎 <a href="{{ asset('storage/' . $tep->duong_dan) }}" target="_blank">{{ $tep->ten_tep }}</a></div>
+                                    <div>📎 <a href="{{ file_url($tep->duong_dan) }}" target="_blank">{{ $tep->ten_tep }}</a></div>
                                 @endforeach
                             </div>
                         @else

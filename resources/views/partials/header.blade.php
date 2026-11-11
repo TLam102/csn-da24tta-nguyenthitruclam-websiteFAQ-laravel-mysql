@@ -11,13 +11,9 @@
         $menuCategories = collect();
     }
 
-    // Ảnh đại diện: ưu tiên avatar_url, nếu không có thì dùng cột anh_dai_dien
+    // Ảnh đại diện: dùng helper file_url (tệp có sẵn trong public/ hoặc tệp tải lên trong storage)
     $hdUser = auth()->user();
-    $hdAnh  = null;
-    if ($hdUser) {
-        $hdAnh = $hdUser->avatar_url
-            ?: (!empty($hdUser->anh_dai_dien) ? asset('storage/' . ltrim($hdUser->anh_dai_dien, '/')) : null);
-    }
+    $hdAnh  = $hdUser ? file_url($hdUser->anh_dai_dien) : null;
 @endphp
 
 {{-- Giữ nút Đăng xuất luôn nằm trong màn hình, tên dài thì cắt "..." --}}

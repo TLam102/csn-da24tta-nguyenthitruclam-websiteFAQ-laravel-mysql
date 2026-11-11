@@ -64,7 +64,7 @@
                     <span class="rp-sender-av">
                         <span>{{ mb_strtoupper(mb_substr(trim(preg_replace('/^(GS\.|PGS\.|TS\.|ThS\.|CN\.|KS\.)\s*/u', '', $tenNguoi)), 0, 1)) }}</span>
                         @if (!empty($faq->nguoi_gui) && !empty($faq->nguoi_gui_anh))
-                            <img src="{{ asset('storage/' . ltrim($faq->nguoi_gui_anh, '/')) }}" alt="" onerror="this.remove()">
+                            <img src="{{ file_url($faq->nguoi_gui_anh) }}" alt="" onerror="this.remove()">
                         @endif
                     </span>
                     {{ $nhanNguoi }} <strong>{{ $tenNguoi }}</strong>

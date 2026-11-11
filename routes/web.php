@@ -110,7 +110,8 @@ Route::get('/storage/{path}', function ($path) {
     abort_unless(is_file($file), 404);
     return response()->file($file);
 })->where('path', 'giang-vien/.*');
-   Route::get('/storage/{path}', function ($path) {
+
+Route::get('/storage/{path}', function ($path) {
        $file = public_path($path);
        abort_unless(is_file($file), 404);
        return response()->file($file);

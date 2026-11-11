@@ -21,7 +21,7 @@
 @php
     $unread  = $stats['moi'] ?? 0;
     $me      = auth()->user();
-    $meAnh   = !empty($me->anh_dai_dien) ? asset('storage/' . ltrim($me->anh_dai_dien, '/')) : null;
+   $meAnh = file_url($me->anh_dai_dien);
     $laAdmin = in_array($me->vai_tro ?? '', \App\Http\Middleware\QuanTriVien::VAI_TRO, true);
 @endphp
 

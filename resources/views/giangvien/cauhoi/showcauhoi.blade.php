@@ -123,7 +123,7 @@
 @media (prefers-reduced-motion:reduce){.rp-grid .rp-card{animation:none}}
 </style>
 @php
-    $svAnh = !empty($sv->anh_dai_dien) ? asset('storage/' . $sv->anh_dai_dien) : null;
+    $svAnh = file_url($sv->anh_dai_dien);
     $daTraLoi = $traLois->count() > 0;
 @endphp
 
