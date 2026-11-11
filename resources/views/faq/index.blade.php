@@ -57,6 +57,13 @@
     .faqx-note.err { display: block; background: #fdecea; border: 1px solid #f3b8b3; color: #b3261e; }
     .faqx-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
 
+    /* Thanh tiến trình gửi */
+    .faqx-prog { display: none; margin-top: 14px; }
+    .faqx-prog.on { display: block; }
+    .faqx-prog-bar { height: 8px; border-radius: 999px; background: #e3ebcf; overflow: hidden; }
+    .faqx-prog-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#9ccc2b,#f2d216); transition: width .15s linear; }
+    .faqx-prog small { display: block; margin-top: 6px; color: #4a5a43; font-size: 13px; }
+
     /* Đính kèm tệp */
     .faqx-drop { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 16px 20px; border: 2px dashed #7cc02b; border-radius: 14px; background: #eefad6; cursor: pointer; color: #16301a; }
     .faqx-drop:hover, .faqx-drop.over { background: #e3f5bd; }
@@ -174,16 +181,21 @@
             <div class="faqx-drop" id="faqxDrop" role="button" tabindex="0">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
                 <div>
-                    <strong>Đính kèm tệp</strong> <small>(ảnh, PDF, Word, Excel...) - tối đa 5 tệp, mỗi tệp 5MB</small>
+                    <strong>Đính kèm tệp</strong> <small>(ảnh, PDF, Word, Excel...) - tối đa 5 tệp, mỗi tệp 5MB. Ảnh được tự động thu nhỏ để gửi nhanh hơn.</small>
                 </div>
             </div>
             <ul class="faqx-files" id="faqxFiles"></ul>
+
+            <div class="faqx-prog" id="faqxProg">
+                <div class="faqx-prog-bar"><i id="faqxProgBar"></i></div>
+                <small id="faqxProgTxt"></small>
+            </div>
 
             <div class="faqx-note" id="faqxNote"></div>
 
             <div class="faqx-foot">
                 <button type="button" class="faqx-btn-line" id="faqxBack"><i class="fa-solid fa-arrow-left"></i> Quay lại</button>
-                <button type="button" class="faqx-btn" id="faqxSend"><i class="fa-solid fa-paper-plane"></i> Gửi câu trả lời</button>
+                <button type="button" class="faqx-btn" id="faqxSend"><i class="fa-solid fa-paper-plane"></i> <span id="faqxSendTxt">Gửi câu trả lời</span></button>
             </div>
         </div>
     </div>
@@ -191,22 +203,32 @@
 
 <script>
 (function () {
-    var MAX_FILES = 5, MAX_SIZE = 5 * 1024 * 1024;
+    var MAX_FILES = 5;
+    var MAX_SIZE = 5 * 1024 * 1024;          // giới hạn sau khi nén (khớp với server)
+    var MAX_RAW_IMG = 25 * 1024 * 1024;      // ảnh gốc được phép lớn hơn vì sẽ được nén
+    var CANH_MAX = 1600, CHAT_LUONG = 0.8;
     var EXT = ['jpg','jpeg','png','webp','pdf','doc','docx','xls','xlsx','ppt','pptx','txt'];
+    var EXT_ANH = ['jpg','jpeg','png','webp'];
 
     var modal = document.getElementById('faqxModal');
     var thread = document.getElementById('faqxThread');
     var ed = document.getElementById('faqxEd');
     var note = document.getElementById('faqxNote');
     var send = document.getElementById('faqxSend');
+    var sendTxt = document.getElementById('faqxSendTxt');
     var drop = document.getElementById('faqxDrop');
     var fileInput = document.getElementById('faqxFile');
     var fileList = document.getElementById('faqxFiles');
+    var prog = document.getElementById('faqxProg');
+    var progBar = document.getElementById('faqxProgBar');
+    var progTxt = document.getElementById('faqxProgTxt');
     var csrf = @json(csrf_token());
     var getTpl = @json(route('faqs.replies', ['id' => '__ID__']));
     var postTpl = @json(route('faqs.reply', ['id' => '__ID__']));
     var currentId = null;
     var files = [];
+    var dangNen = 0;       // số ảnh đang được nén
+    var dangGui = false;   // đang gửi lên server
 
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -222,6 +244,56 @@
         note.className = 'faqx-note' + (msg ? ' ' + type : '');
         note.innerHTML = msg ? (type === 'ok' ? '<i class="fa-solid fa-circle-info"></i> ' : '<i class="fa-solid fa-circle-exclamation"></i> ') + esc(msg) : '';
     }
+    function capNhatNutGui() {
+        send.disabled = dangGui || dangNen > 0;
+        if (dangGui) return;
+        sendTxt.textContent = dangNen > 0 ? 'Đang xử lý ảnh...' : 'Gửi câu trả lời';
+    }
+    function hienTienTrinh(p, txt) {
+        prog.classList.add('on');
+        progBar.style.width = p + '%';
+        progTxt.textContent = txt;
+    }
+    function anTienTrinh() {
+        prog.classList.remove('on');
+        progBar.style.width = '0';
+        progTxt.textContent = '';
+    }
+
+    // ===== Nén ảnh trên thiết bị (ảnh chụp điện thoại 3-8MB còn ~200-500KB) =====
+    function docAnh(file) {
+        if (window.createImageBitmap) {
+            return createImageBitmap(file, { imageOrientation: 'from-image' }).catch(function () { return docAnhCu(file); });
+        }
+        return docAnhCu(file);
+    }
+    function docAnhCu(file) {
+        return new Promise(function (resolve, reject) {
+            var url = URL.createObjectURL(file);
+            var img = new Image();
+            img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+            img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('img')); };
+            img.src = url;
+        });
+    }
+    function nenAnh(file) {
+        return docAnh(file).then(function (bmp) {
+            var w0 = bmp.width, h0 = bmp.height;
+            var tiLe = Math.min(1, CANH_MAX / Math.max(w0, h0));
+            var w = Math.round(w0 * tiLe), h = Math.round(h0 * tiLe);
+            var c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            var ctx = c.getContext('2d');
+            ctx.fillStyle = '#fff';            // ảnh PNG trong suốt không bị nền đen khi sang JPEG
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(bmp, 0, 0, w, h);
+            if (bmp.close) bmp.close();
+            return new Promise(function (resolve) { c.toBlob(resolve, 'image/jpeg', CHAT_LUONG); });
+        }).then(function (blob) {
+            if (!blob || blob.size >= file.size) return file;   // nén xong mà không nhẹ hơn thì giữ ảnh gốc
+            return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+        }).catch(function () { return file; });
+    }
 
     // ===== Tệp đính kèm =====
     function veTep() {
@@ -231,24 +303,38 @@
             li.innerHTML = '<i class="fa-solid fa-paperclip"></i><span class="n">' + esc(f.name) + '</span><span class="s">' + fmtSize(f.size) + '</span>';
             var x = document.createElement('button');
             x.type = 'button'; x.setAttribute('aria-label', 'Bỏ tệp'); x.innerHTML = '&times;';
-            x.addEventListener('click', function () { files.splice(i, 1); veTep(); });
+            x.addEventListener('click', function () { if (dangGui) return; files.splice(i, 1); veTep(); });
             li.appendChild(x);
             fileList.appendChild(li);
         });
     }
+    function themMotTep(f) {
+        var ext = (f.name.split('.').pop() || '').toLowerCase();
+        if (EXT.indexOf(ext) === -1) { setNote('err', 'Tệp "' + f.name + '" không được hỗ trợ (chỉ nhận ảnh, PDF, Word, Excel, PowerPoint, TXT).'); return Promise.resolve(); }
+        if (files.length + dangNen >= MAX_FILES) { setNote('err', 'Chỉ được đính kèm tối đa 5 tệp.'); return Promise.resolve(); }
+
+        var laAnh = EXT_ANH.indexOf(ext) !== -1;
+        if (!laAnh && f.size > MAX_SIZE) { setNote('err', 'Tệp "' + f.name + '" vượt quá 5MB.'); return Promise.resolve(); }
+        if (laAnh && f.size > MAX_RAW_IMG) { setNote('err', 'Ảnh "' + f.name + '" quá lớn (trên 25MB).'); return Promise.resolve(); }
+
+        if (!laAnh) { files.push(f); veTep(); return Promise.resolve(); }
+
+        dangNen++; capNhatNutGui();
+        return nenAnh(f).then(function (kq) {
+            if (kq.size > MAX_SIZE) { setNote('err', 'Ảnh "' + f.name + '" vẫn vượt quá 5MB sau khi thu nhỏ.'); return; }
+            files.push(kq); veTep();
+        }).then(function () {
+            dangNen--; capNhatNutGui();
+        });
+    }
     function themTep(list) {
         setNote('', '');
-        Array.prototype.forEach.call(list, function (f) {
-            var ext = (f.name.split('.').pop() || '').toLowerCase();
-            if (EXT.indexOf(ext) === -1) { setNote('err', 'Tệp "' + f.name + '" không được hỗ trợ (chỉ nhận ảnh, PDF, Word, Excel, PowerPoint, TXT).'); return; }
-            if (f.size > MAX_SIZE) { setNote('err', 'Tệp "' + f.name + '" vượt quá 5MB.'); return; }
-            if (files.length >= MAX_FILES) { setNote('err', 'Chỉ được đính kèm tối đa 5 tệp.'); return; }
-            files.push(f);
-        });
-        veTep();
+        // Xử lý lần lượt để tiết kiệm bộ nhớ trên điện thoại
+        var ds = Array.prototype.slice.call(list);
+        ds.reduce(function (p, f) { return p.then(function () { return themMotTep(f); }); }, Promise.resolve());
     }
-    drop.addEventListener('click', function () { fileInput.click(); });
-    drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+    drop.addEventListener('click', function () { if (!dangGui) fileInput.click(); });
+    drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!dangGui) fileInput.click(); } });
     fileInput.addEventListener('change', function () { themTep(fileInput.files); fileInput.value = ''; });
     ['dragenter', 'dragover'].forEach(function (ev) {
         drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
@@ -272,7 +358,7 @@
         var h = '<div class="faqx-att">';
         tep.forEach(function (t) {
             if (t.la_anh) {
-                h += '<a href="' + esc(t.url) + '" target="_blank" rel="noopener"><img src="' + esc(t.url) + '" alt="' + esc(t.ten) + '"></a>';
+                h += '<a href="' + esc(t.url) + '" target="_blank" rel="noopener"><img src="' + esc(t.url) + '" alt="' + esc(t.ten) + '" loading="lazy" decoding="async"></a>';
             } else {
                 h += '<a href="' + esc(t.url) + '" target="_blank" rel="noopener">' + iconTep(t.ten) + '<span>' + esc(t.ten) + '</span></a>';
             }
@@ -285,12 +371,15 @@
         d.innerHTML = '<b>' + esc(r.nguoi) + '</b><span class="t">' + esc(r.thoi_gian) + '</span><div class="c">' + r.noi_dung + '</div>' + htmlTep(r.tep);
         thread.appendChild(d);
     }
-    function closeModal() { modal.classList.remove('open'); currentId = null; }
+    function closeModal() {
+        if (dangGui) return;   // đang gửi thì không cho đóng, tránh mất dữ liệu
+        modal.classList.remove('open'); currentId = null;
+    }
 
     function openModal(id) {
         currentId = id;
         thread.innerHTML = '<p class="faqx-muted">Đang tải...</p>';
-        ed.innerHTML = ''; files = []; veTep(); setNote('', '');
+        ed.innerHTML = ''; files = []; veTep(); setNote('', ''); anTienTrinh();
         document.getElementById('faqxTitle').textContent = '';
         document.getElementById('faqxMeta').textContent = '';
         modal.classList.add('open');
@@ -307,22 +396,46 @@
             .catch(function () { thread.innerHTML = '<p style="color:#b3261e">Không tải được dữ liệu. Vui lòng thử lại.</p>'; });
     }
 
-    // ===== Gửi =====
+    // ===== Gửi (XMLHttpRequest để có phần trăm tải lên) =====
+    function guiLen(url, fd, onProg) {
+        return new Promise(function (resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', url);
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.upload.onprogress = function (e) { if (e.lengthComputable) onProg(Math.round(e.loaded / e.total * 100)); };
+            xhr.onload = function () {
+                var d = {};
+                try { d = JSON.parse(xhr.responseText); } catch (e) {}
+                resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, d: d });
+            };
+            xhr.onerror = function () { reject(new Error('network')); };
+            xhr.ontimeout = function () { reject(new Error('timeout')); };
+            xhr.timeout = 180000;
+            xhr.send(fd);
+        });
+    }
+
     function submit() {
+        if (dangGui || dangNen > 0) return;
         var html = ed.innerHTML.trim();
         if (!ed.textContent.trim()) { setNote('err', 'Vui lòng nhập nội dung trả lời.'); return; }
-        send.disabled = true; setNote('', '');
+
+        dangGui = true; send.disabled = true; setNote('', '');
+        var coTep = files.length > 0;
+        sendTxt.textContent = 'Đang gửi...';
+        if (coTep) hienTienTrinh(0, 'Đang tải lên 0%');
 
         var fd = new FormData();
         fd.append('noi_dung', html);
         files.forEach(function (f) { fd.append('tep[]', f); });
 
-        fetch(postTpl.replace('__ID__', currentId), {
-            method: 'POST',
-            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
-            body: fd
+        guiLen(postTpl.replace('__ID__', currentId), fd, function (p) {
+            if (!coTep) return;
+            hienTienTrinh(p, p < 100 ? 'Đang tải lên ' + p + '%' : 'Đang xử lý trên máy chủ...');
+            sendTxt.textContent = p < 100 ? 'Đang gửi ' + p + '%' : 'Đang xử lý...';
         })
-        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); })
         .then(function (x) {
             if (!x.ok) {
                 var msg = x.d.message || 'Gửi thất bại.';
@@ -331,6 +444,7 @@
                     if (k && x.d.errors[k][0]) msg = x.d.errors[k][0];
                 }
                 if (x.status === 413) msg = 'Tệp quá lớn so với cấu hình máy chủ.';
+                if (x.status === 419) msg = 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang (F5) rồi thử lại.';
                 setNote('err', msg);
                 return;
             }
@@ -344,8 +458,14 @@
             var b = document.querySelector('[data-status="' + currentId + '"]');
             if (b) { b.textContent = 'Đã trả lời'; b.classList.remove('none'); }
         })
-        .catch(function () { setNote('err', 'Không gửi được. Vui lòng thử lại.'); })
-        .then(function () { send.disabled = false; });
+        .catch(function (e) {
+            setNote('err', e && e.message === 'timeout' ? 'Gửi quá lâu, vui lòng kiểm tra mạng rồi thử lại.' : 'Không gửi được. Vui lòng thử lại.');
+        })
+        .then(function () {
+            dangGui = false;
+            anTienTrinh();
+            capNhatNutGui();
+        });
     }
 
     // Thanh công cụ định dạng

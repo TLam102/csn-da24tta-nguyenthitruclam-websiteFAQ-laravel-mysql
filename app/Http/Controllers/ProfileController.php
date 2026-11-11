@@ -90,7 +90,7 @@ class ProfileController extends Controller
             'anh_dai_dien.required' => 'Vui lòng chọn một ảnh.',
             'anh_dai_dien.image'    => 'File tải lên phải là ảnh.',
             'anh_dai_dien.mimes'    => 'Ảnh chỉ nhận định dạng JPG, PNG hoặc WEBP.',
-            'anh_dai_dien.max'      => 'Ảnh không được vượt quá 2MB.',
+            'anh_dai_dien.max'      => 'Ảnh không được vượt quá 5MB.',
             'anh_dai_dien.uploaded' => 'Không tải được ảnh (file quá lớn so với cấu hình máy chủ).',
         ]);
 
