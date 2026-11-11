@@ -1,58 +1,53 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Website quản lý, tra cứu và phổ biến câu hỏi thường gặp (FAQ) dành cho sinh viên Khoa Công nghệ Thông tin
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Tóm tắt đề tài
 
-## About Laravel
+Đề tài xây dựng một website giúp sinh viên Khoa Công nghệ Thông tin tra cứu nhanh các câu hỏi thường gặp (FAQ) về học tập và thủ tục, đồng thời giúp cán bộ khoa quản lý nội dung FAQ.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Website gồm hai phần. Phía sinh viên cho phép đăng ký, đăng nhập, tìm kiếm FAQ theo từ khóa, lọc theo danh mục, đọc chi tiết FAQ, đánh giá "hữu ích" hoặc "không hữu ích" và gửi câu hỏi mới. Phía quản trị cho phép quản trị viên (cán bộ khoa) thêm, sửa, xóa, duyệt và phân loại FAQ, quản lý danh mục, duyệt câu hỏi do sinh viên gửi và xem thống kê.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Các chủ đề FAQ gồm: đào tạo, đăng ký học phần, học vụ, thực tập, đồ án, khóa luận, nghiên cứu khoa học, học bổng, hoạt động sinh viên và các thủ tục.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Công nghệ sử dụng: Laravel (PHP), MySQL (database faq_it), Laravel Breeze cho đăng nhập và phân quyền, Blade kết hợp Bootstrap hoặc Tailwind cho giao diện responsive, Chart.js cho biểu đồ thống kê, Git và GitHub để quản lý mã nguồn.
 
-## Learning Laravel
+## Lịch thực hiện
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Lịch thực hiện theo kế hoạch của Khoa, nội dung bám theo 5 nội dung nghiên cứu trong đề cương.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Tuần 1 (12/10 – 18/10/2026)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Công việc: khảo sát và phân tích yêu cầu (Nội dung 1); chọn công nghệ Laravel + MySQL.
 
-## Agentic Development
+Kết quả dự kiến: danh sách nhóm FAQ; bảng yêu cầu chức năng và phi chức năng.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Tuần 2 (02/11 – 08/11/2026)
 
-```bash
-composer require laravel/boost --dev
+Công việc: phân tích và thiết kế hệ thống gồm Use Case, ERD, wireframe (Nội dung 2); tạo database, khởi tạo dự án Laravel.
 
-php artisan boost:install
-```
+Kết quả dự kiến: Use Case, ERD, wireframe các màn hình chính; dự án Laravel kết nối CSDL.
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Tuần 3 (23/11 – 29/11/2026)
 
-## Contributing
+Công việc: xây dựng chức năng tra cứu FAQ (Nội dung 3); xây dựng chức năng quản lý FAQ (Nội dung 4).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Kết quả dự kiến: website tra cứu công khai (tìm kiếm, lọc theo danh mục); trang quản trị thêm, sửa, xóa FAQ.
 
-## Code of Conduct
+### Tuần 4 (14/12 – 20/12/2026)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Công việc: kiểm thử và đánh giá hệ thống (Nội dung 5); hoàn thiện báo cáo, chỉnh sửa theo góp ý của giảng viên.
 
-## Security Vulnerabilities
+Kết quả dự kiến: kết quả kiểm thử; website hoàn chỉnh; bản báo cáo hoàn chỉnh.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Kết thúc (28/12/2026)
 
-## License
+Công việc: nộp quyển báo cáo.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Kết quả: báo cáo đồ án và website hoàn chỉnh.
+
+## Tác giả
+
+Sinh viên thực hiện: Nguyễn Thị Trúc Lam 
+
+Giảng viên hướng dẫn: TS. Nguyễn Nhứt Lam
+
+Khoa Công nghệ Thông tin: DA24TTA
