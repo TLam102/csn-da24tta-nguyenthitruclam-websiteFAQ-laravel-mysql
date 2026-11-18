@@ -40,4 +40,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('phan_cong_linh_vuc');
     }
-}; 
+};  
