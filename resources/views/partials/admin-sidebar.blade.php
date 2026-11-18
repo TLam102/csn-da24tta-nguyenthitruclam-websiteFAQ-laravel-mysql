@@ -147,7 +147,10 @@
         <a href="{{ url('/admin/danh-muc') }}" class="{{ request()->is('admin/danh-muc*') ? 'active' : '' }}">
             <span>📁</span><span class="label">Quản lý danh mục</span>
         </a>
-        
+        <a href="{{ url('/admin/phan-cong') }}" class="{{ request()->is('admin/phan-cong*') ? 'active' : '' }}">
+            <span>👩‍🏫</span><span class="label">Phân công giảng viên</span>
+        </a>
+
         <a href="{{ url('/admin/cau-hoi') }}" class="{{ request()->is('admin/cau-hoi*') ? 'active' : '' }}">
             <span>❓</span><span class="label">Câu hỏi chờ duyệt</span>
         </a>
