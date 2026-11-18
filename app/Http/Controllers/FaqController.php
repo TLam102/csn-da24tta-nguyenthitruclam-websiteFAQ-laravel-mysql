@@ -419,4 +419,4 @@ class FaqController extends Controller
 
         return back()->with('vote_msg', 'Cảm ơn bạn đã đánh giá!');
     }
-}s
+}
