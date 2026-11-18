@@ -33,6 +33,9 @@
     .tl-att a small { color: #6b7a5c; }
     .tl-att a:hover { background: #f1f8e6; }
     .tl-att img { display: block; max-height: 140px; max-width: 240px; border-radius: 8px; border: 1px solid #cfe3b5; }
+    .rp-question { margin: 18px 0 0; padding: 14px 18px; border: 1px solid #f0e3a6; border-left: 4px solid #f2d216; border-radius: 12px; background: #fffbea; }
+    .rp-question h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 15px; color: #7a5d00; }
+    .rp-question p { margin: 0; line-height: 1.7; color: #2b3a2e; word-break: break-word; }
     .rp-add { display: inline-block; margin-top: 4px; padding: 9px 20px; border-radius: 999px; background: linear-gradient(90deg,#9ccc2b,#f2d216); color: #1b3a00; font-weight: 700; text-decoration: none; }
 </style>
 
@@ -76,6 +79,14 @@
                 <span class="rp-badge none">Chưa trả lời</span>
             @endif
         </div>
+
+        {{-- Nội dung chi tiết do người dùng nhập khi gửi câu hỏi (FAQ do quản trị tự soạn thì không có) --}}
+        @if (trim((string) ($faq->noi_dung_gui ?? '')) !== '')
+            <div class="rp-question">
+                <h4><i class="fa-solid fa-circle-question"></i> Nội dung câu hỏi{{ !empty($faq->nguoi_gui) ? ' của ' . $faq->nguoi_gui : '' }}</h4>
+                <p>{!! nl2br(e($faq->noi_dung_gui)) !!}</p>
+            </div>
+        @endif
 
         @if (trim((string) $faq->cau_tra_loi) !== '')
             <div class="answer-box">{!! nl2br(e($faq->cau_tra_loi)) !!}</div>
@@ -134,25 +145,7 @@
             @endif
         </section>
 
-        <div class="vote-box">
-            <p>Câu hỏi này có hữu ích không?</p>
-
-            <form action="{{ route('faqs.vote', $faq->faq_id) }}" method="POST" class="vote-buttons">
-                @csrf
-                <button type="submit" name="value" value="up"
-                        class="vote-btn {{ $voted === 'up' ? 'active' : '' }}" {{ $voted ? 'disabled' : '' }}>
-                    <i class="fa-regular fa-thumbs-up"></i> Hữu ích
-                </button>
-                <button type="submit" name="value" value="down"
-                        class="vote-btn {{ $voted === 'down' ? 'active' : '' }}" {{ $voted ? 'disabled' : '' }}>
-                    <i class="fa-regular fa-thumbs-down"></i> Không hữu ích
-                </button>
-            </form>
-
-            @if (session('vote_msg'))
-                <p class="vote-msg">{{ session('vote_msg') }}</p>
-            @endif
-        </div>
+           
     </article>
 
     @if ($related->isNotEmpty())

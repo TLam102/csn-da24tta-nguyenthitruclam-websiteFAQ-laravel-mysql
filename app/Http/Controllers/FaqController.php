@@ -363,6 +363,7 @@ class FaqController extends Controller
             ->where('f.trang_thai', self::TRANG_THAI_XUAT_BAN)
             ->select('f.faq_id', 'f.cau_hoi_id', 'f.danh_muc_id', 'f.cau_hoi', 'f.cau_tra_loi',
                      'f.ngay_cap_nhat', 'f.ngay_tao', 'u.name as nguoi_dang',
+                     'c.noi_dung as noi_dung_gui',   // nội dung chi tiết người dùng nhập khi gửi câu hỏi
                      's.name as nguoi_gui', 's.anh_dai_dien as nguoi_gui_anh',
                      'g.name as giang_vien', 'g.anh_dai_dien as giang_vien_anh',
                      'd.' . self::COT_TEN_DM . ' as tendanhmuc', 'd.slug')
@@ -418,4 +419,4 @@ class FaqController extends Controller
 
         return back()->with('vote_msg', 'Cảm ơn bạn đã đánh giá!');
     }
-}
+}s
