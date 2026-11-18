@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\DanhMucController as AdminDanhMucController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DuyetCauHoiController;
 use App\Http\Controllers\Admin\FaqController as AdminFaqController;
+use App\Http\Controllers\Admin\AdminPhanCongController;
 
 // =====================================================
 // KHU VỰC QUẢN TRỊ  (đường dẫn bắt đầu bằng /admin)
@@ -27,6 +28,10 @@ Route::middleware(['auth', QuanTriVien::class])->prefix('admin')->name('admin.')
     // Có đủ: index, create, store, show (xem chi tiết), edit, update, destroy
     Route::resource('faq', AdminFaqController::class);
     Route::resource('danh-muc', AdminDanhMucController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // Phân công giảng viên phụ trách lĩnh vực (danh mục)
+    Route::get('phan-cong', [AdminPhanCongController::class, 'index'])->name('phan-cong.index');
+    Route::post('phan-cong/{id}', [AdminPhanCongController::class, 'update'])->whereNumber('id')->name('phan-cong.update');
 
     Route::get('cau-hoi', [AdminCauHoiController::class, 'index'])->name('cau-hoi.index');
     Route::post('cau-hoi/{id}/duyet', [DuyetCauHoiController::class, 'duyet'])->whereNumber('id')->name('cau-hoi.duyet');

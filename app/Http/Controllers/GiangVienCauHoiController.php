@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\PhuTrach;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -34,10 +35,14 @@ class GiangVienCauHoiController extends Controller
         return trim($html);
     }
 
+    /**
+     * Câu hỏi thuộc LĨNH VỰC (danh mục) mà giảng viên được phân công (bảng phan_cong_linh_vuc).
+     * Câu hỏi thuộc lĩnh vực khác không xuất hiện, dù sinh viên có chọn đích danh giảng viên này.
+     */
     private function mine()
     {
         return DB::table(self::TBL_CAUHOI . ' as c')
-            ->where('c.giang_vien_id', auth()->id())
+            ->whereIn('c.danh_muc_id', PhuTrach::danhMucIds(auth()->user()) ?: [0])
             ->where('c.trang_thai', '!=', self::TT_TU_CHOI);
     }
 
@@ -190,7 +195,7 @@ class GiangVienCauHoiController extends Controller
         if (!$cauHoi->giang_vien_da_xem) {
             DB::table(self::TBL_CAUHOI)
                 ->where(self::PK, $id)
-                ->where('giang_vien_id', auth()->id())
+                ->whereIn('danh_muc_id', PhuTrach::danhMucIds(auth()->user()) ?: [0])
                 ->update(['giang_vien_da_xem' => true, 'giang_vien_xem_luc' => now()]);
         }
 
@@ -257,6 +262,14 @@ class GiangVienCauHoiController extends Controller
             'tep.*.mimes'       => 'Tệp chỉ nhận: ảnh, PDF, Word, Excel, PowerPoint, TXT.',
             'tep.*.uploaded'    => 'Không tải được tệp (vượt giới hạn của máy chủ).',
         ]);
+
+        // Chỉ giảng viên phụ trách lĩnh vực (danh mục) của câu hỏi mới được trả lời
+        $danhMucId = DB::table(self::TBL_CAUHOI)->where(self::PK, $id)->value('danh_muc_id');
+        abort_unless(
+            PhuTrach::coQuyen(auth()->user(), $danhMucId),
+            403,
+            'Bạn không phụ trách lĩnh vực của câu hỏi này nên không thể trả lời.'
+        );
 
         $cauHoi = $this->mine()->where('c.' . self::PK, $id)->first();
         abort_if(!$cauHoi, 404);
@@ -376,7 +389,7 @@ class GiangVienCauHoiController extends Controller
         $this->authorizeGv();
 
         DB::table(self::TBL_CAUHOI)
-            ->where('giang_vien_id', auth()->id())
+            ->whereIn('danh_muc_id', PhuTrach::danhMucIds(auth()->user()) ?: [0])
             ->where('giang_vien_da_xem', false)
             ->update(['giang_vien_da_xem' => true, 'giang_vien_xem_luc' => now()]);
 

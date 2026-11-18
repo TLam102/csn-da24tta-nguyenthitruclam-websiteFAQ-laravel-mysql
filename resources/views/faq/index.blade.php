@@ -122,7 +122,8 @@
                     <span class="faqx-badge {{ $soTL > 0 ? '' : 'none' }}" data-status="{{ $f->faq_id }}">
                         {{ $soTL > 0 ? 'Đã trả lời' : 'Chưa trả lời' }}
                     </span>
-                    @if ($canReply)
+                    {{-- Chỉ hiện nút "Trả lời" khi là quản trị viên hoặc giảng viên phụ trách lĩnh vực của FAQ --}}
+                    @if ($laQuanTri || in_array((int) ($f->danh_muc_id ?? 0), $phuTrachIds, true))
                         <button type="button" class="faqx-reply-btn" data-open-reply="{{ $f->faq_id }}">
                             <i class="fa-solid fa-reply"></i> Trả lời
                         </button>

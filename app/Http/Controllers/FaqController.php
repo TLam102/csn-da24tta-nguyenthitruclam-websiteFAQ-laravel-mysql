@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\PhuTrach;
 use App\Support\ThongBao;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -23,10 +24,15 @@ class FaqController extends Controller
     private const TBL_TEP_FAQ  = 'faq_tra_loi_tep';  // tệp đính kèm của lượt trả lời trên FAQ
     private const TBL_TEP_GV   = 'cau_tra_loi_tep';  // tệp đính kèm của giảng viên (khu giảng viên)
 
-    /** Mọi tài khoản đã đăng nhập (sinh viên, giảng viên, quản trị viên) đều được trả lời */
-    private function canReply(): bool
+    /**
+     * Được trả lời FAQ thuộc danh mục này không?
+     *  - quản trị viên: mọi danh mục
+     *  - giảng viên: chỉ danh mục được phân công (bảng phan_cong_linh_vuc)
+     *  - sinh viên: không
+     */
+    private function canReplyIn($danhMucId): bool
     {
-        return auth()->check();
+        return PhuTrach::coQuyen(auth()->user(), $danhMucId);
     }
 
     /** Làm sạch nội dung trả lời (hỗ trợ cả dữ liệu cũ dạng văn bản thuần). */
@@ -146,7 +152,7 @@ class FaqController extends Controller
                 $query->where('f.cau_hoi', 'like', '%' . $q . '%');
             }
 
-            $query->select('f.faq_id', 'f.cau_hoi', 'f.ngay_cap_nhat', 'f.ngay_tao',
+            $query->select('f.faq_id', 'f.danh_muc_id', 'f.cau_hoi', 'f.ngay_cap_nhat', 'f.ngay_tao',
                            'd.' . self::COT_TEN_DM . ' as tendanhmuc', 'd.slug');
 
             // Số lượt trả lời của mỗi FAQ (gồm cả trả lời của giảng viên cho câu hỏi gốc)
@@ -162,9 +168,12 @@ class FaqController extends Controller
             $faqs = new LengthAwarePaginator([], 0, self::PER_PAGE, 1, ['path' => $request->url()]);
         }
 
-        $canReply = $this->canReply();
+        // Quyền trả lời theo lĩnh vực: quản trị viên mọi FAQ; giảng viên chỉ danh mục được phân công
+        $laQuanTri   = PhuTrach::laQuanTri(auth()->user());
+        $phuTrachIds = PhuTrach::danhMucIds(auth()->user());
+        $canReply    = $laQuanTri || !empty($phuTrachIds);   // có ít nhất một FAQ được phép trả lời → nạp cửa sổ soạn
 
-        return view('faq.index', compact('faqs', 'categories', 'q', 'slug', 'canReply'));
+        return view('faq.index', compact('faqs', 'categories', 'q', 'slug', 'canReply', 'laQuanTri', 'phuTrachIds'));
     }
 
     // ===== LỊCH SỬ TRAO ĐỔI CỦA MỘT FAQ (JSON, mở trong cửa sổ "Trả lời") =====
@@ -176,7 +185,7 @@ class FaqController extends Controller
             ->leftJoin('users as s', 's.id', '=', 'c.nguoi_gui_id')
             ->where('f.faq_id', $id)
             ->where('f.trang_thai', self::TRANG_THAI_XUAT_BAN)
-            ->select('f.faq_id', 'f.cau_hoi_id', 'f.cau_hoi', 'f.ngay_tao', 'f.ngay_cap_nhat',
+            ->select('f.faq_id', 'f.cau_hoi_id', 'f.danh_muc_id', 'f.cau_hoi', 'f.ngay_tao', 'f.ngay_cap_nhat',
                      'u.name as nguoi_dang', 's.name as nguoi_gui')
             ->first();
 
@@ -197,16 +206,30 @@ class FaqController extends Controller
             // Ưu tiên tên tài khoản đã gửi câu hỏi; không có thì dùng người tạo FAQ
             'nguoi_dang' => $faq->nguoi_gui ?? $faq->nguoi_dang ?? 'Khoa CNTT',
             'ngay'       => $ngay ? \Carbon\Carbon::parse($ngay)->format('d/m/Y H:i') : '',
-            'can_reply'  => $this->canReply(),
+            'can_reply'  => $this->canReplyIn($faq->danh_muc_id),
             'detail_url' => route('faqs.show', $faq->faq_id),
             'replies'    => $replies->values(),
         ]);
     }
 
-    // ===== GỬI THÊM MỘT LƯỢT TRẢ LỜI (mọi tài khoản đã đăng nhập, có thể đính kèm tệp) =====
+    // ===== GỬI THÊM MỘT LƯỢT TRẢ LỜI (giảng viên phụ trách lĩnh vực / quản trị viên, có thể đính kèm tệp) =====
     public function reply(Request $request, int $id)
     {
-        abort_unless($this->canReply(), 403, 'Bạn cần đăng nhập để trả lời.');
+        abort_unless(auth()->check(), 403, 'Bạn cần đăng nhập để trả lời.');
+
+        $faq = DB::table(self::TBL_FAQ)
+            ->where('faq_id', $id)
+            ->where('trang_thai', self::TRANG_THAI_XUAT_BAN)
+            ->first();
+        abort_if(!$faq, 404);
+
+        // Chỉ giảng viên phụ trách lĩnh vực (danh mục) của FAQ, hoặc quản trị viên, mới được trả lời
+        abort_unless(
+            $this->canReplyIn($faq->danh_muc_id),
+            403,
+            'Chỉ giảng viên phụ trách lĩnh vực này hoặc quản trị viên mới được trả lời.'
+        );
+
         abort_unless(Schema::hasTable(self::TBL_TRALOI), 503, 'Chưa tạo bảng faq_tra_loi. Hãy chạy: php artisan migrate');
 
         $request->validate([
@@ -228,12 +251,6 @@ class FaqController extends Controller
                 'errors'  => ['tep' => ['Chưa tạo bảng faq_tra_loi_tep (chạy php artisan migrate).']],
             ], 422);
         }
-
-        $faq = DB::table(self::TBL_FAQ)
-            ->where('faq_id', $id)
-            ->where('trang_thai', self::TRANG_THAI_XUAT_BAN)
-            ->first();
-        abort_if(!$faq, 404);
 
         $html = GiangVienCauHoiController::cleanHtml($request->input('noi_dung'));
         $text = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags($html), ENT_QUOTES, 'UTF-8')));
@@ -375,7 +392,8 @@ class FaqController extends Controller
             return $r;
         });
 
-        $canReply = $this->canReply();
+        // Nút trả lời ở trang chi tiết chỉ hiện với quản trị viên / giảng viên phụ trách lĩnh vực này
+        $canReply = $this->canReplyIn($faq->danh_muc_id);
 
         return view('faq.show', compact('faq', 'related', 'voted', 'traLois', 'canReply'));
     }
