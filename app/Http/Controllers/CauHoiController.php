@@ -6,6 +6,7 @@ use App\Models\CauHoiSinhVien;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class CauHoiController extends Controller
@@ -70,9 +71,23 @@ public function index()
             return redirect()->route('login')->with('error', 'Vui lòng đăng nhập để gửi câu hỏi.');
         }
 
-        try {
-            $danhMucId = DB::table(self::TBL_DANHMUC)->where('slug', $data['danh_muc'])->value('danh_muc_id');
+        $danhMucId = DB::table(self::TBL_DANHMUC)->where('slug', $data['danh_muc'])->value('danh_muc_id');
 
+        // Giảng viên được chọn phải phụ trách đúng lĩnh vực (danh mục) của câu hỏi
+        if (!empty($data['giang_vien_id']) && Schema::hasTable('phan_cong_linh_vuc')) {
+            $phuTrach = DB::table('phan_cong_linh_vuc')
+                ->where('giang_vien_id', $data['giang_vien_id'])
+                ->where('danh_muc_id', $danhMucId)
+                ->exists();
+
+            if (!$phuTrach) {
+                return back()->withInput()->withErrors([
+                    'giang_vien_id' => 'Giảng viên này không phụ trách lĩnh vực đã chọn. Hãy chọn lại giảng viên hoặc để "Không chọn (gửi chung)".',
+                ]);
+            }
+        }
+
+        try {
             DB::table(self::TBL_CAUHOI)->insert([
                 'nguoi_gui_id'  => auth()->id(),
                 'danh_muc_id'   => $danhMucId,
@@ -91,15 +106,34 @@ public function index()
             ->with('success', 'Gửi câu hỏi thành công! Câu hỏi sẽ được kiểm duyệt trước khi hiển thị.');
     }
 
+    /**
+     * Danh sách giảng viên kèm các lĩnh vực phụ trách:
+     *  - $gv->linh_vuc: mảng slug danh mục giảng viên phụ trách (để trang lọc theo danh mục đã chọn)
+     * Nếu chưa có bảng phan_cong_linh_vuc thì không lọc (giữ nguyên hành vi cũ).
+     */
     private function giangViens()
     {
         try {
-            return DB::table(self::TBL_GIANGVIEN)
+            $ds = DB::table(self::TBL_GIANGVIEN)
                 ->where(self::GV_ROLE_COL, self::GV_ROLE_VALUE)
                 ->where('trang_thai', 1)
                 ->select(self::GV_ID_COL . ' as id', 'name')
                 ->orderBy('name')
                 ->get();
+
+            $coPhanCong = Schema::hasTable('phan_cong_linh_vuc');
+            $theoGv = $coPhanCong
+                ? DB::table('phan_cong_linh_vuc as p')
+                    ->join(self::TBL_DANHMUC . ' as d', 'd.danh_muc_id', '=', 'p.danh_muc_id')
+                    ->get(['p.giang_vien_id', 'd.slug'])
+                    ->groupBy('giang_vien_id')
+                : collect();
+
+            return $ds->map(function ($gv) use ($theoGv, $coPhanCong) {
+                $gv->loc_theo_linh_vuc = $coPhanCong;
+                $gv->linh_vuc = $theoGv->get($gv->id, collect())->pluck('slug')->values()->all();
+                return $gv;
+            });
         } catch (\Throwable $e) {
             Log::warning('CauHoiController@giangViens: ' . $e->getMessage());
             return collect();

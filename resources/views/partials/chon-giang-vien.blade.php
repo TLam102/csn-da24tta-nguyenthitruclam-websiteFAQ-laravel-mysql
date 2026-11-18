@@ -13,13 +13,18 @@
         ? \App\Models\User::whereIn('id', $ids)->orderBy('name')->get()
         : collect();
 
-    $dsGv = $users->map(function ($u) {
+    // Lĩnh vực (slug danh mục) mà mỗi giảng viên phụ trách – controller truyền sang trong $gv->linh_vuc
+    $locTheoLinhVuc = collect($giangViens ?? [])->contains(fn ($g) => !empty($g->loc_theo_linh_vuc));
+    $linhVucGv = collect($giangViens ?? [])->mapWithKeys(fn ($g) => [(string) $g->id => (array) ($g->linh_vuc ?? [])]);
+
+    $dsGv = $users->map(function ($u) use ($linhVucGv) {
         $ten = trim(preg_replace('/^(GS\.|PGS\.|TS\.|ThS\.|CN\.|KS\.)\s*/u', '', $u->name));
         return [
             'id'   => (string) $u->id,
             'name' => $u->name,
             'anh'  => $u->avatar_url ?? null,
             'ch'   => mb_strtoupper(mb_substr($ten !== '' ? $ten : $u->name, 0, 1)),
+            'lv'   => implode(',', $linhVucGv->get((string) $u->id, [])),
         ];
     })->values();
 
@@ -47,9 +52,10 @@
     .gvp-item:hover { background: #f1f8e6; }
     .gvp-item[aria-selected="true"] { background: #e3f4d6; }
     .gvp-empty { padding: 14px 16px; color: #6b7a5c; display: none; }
+    .gvp-hint { display: none; padding: 10px 16px 12px; color: #6b5300; background: #fff8dc; border-top: 1px solid #f0e3a6; font-size: 13px; }
 </style>
 
-<div class="gvp" id="gvp">
+<div class="gvp" id="gvp" data-loc="{{ $locTheoLinhVuc ? '1' : '0' }}">
     <input type="hidden" name="{{ $ten }}" id="gvpValue" value="{{ $chon['id'] ?? '' }}">
 
     <button type="button" class="gvp-btn {{ $errors->has($ten) ? 'invalid' : '' }}" id="gvpBtn" aria-haspopup="listbox" aria-expanded="false">
@@ -75,7 +81,7 @@
             </li>
             @foreach ($dsGv as $g)
                 <li class="gvp-item" role="option"
-                    data-id="{{ $g['id'] }}" data-name="{{ $g['name'] }}" data-ch="{{ $g['ch'] }}" data-anh="{{ $g['anh'] }}"
+                    data-id="{{ $g['id'] }}" data-lv="{{ $g['lv'] }}" data-name="{{ $g['name'] }}" data-ch="{{ $g['ch'] }}" data-anh="{{ $g['anh'] }}"
                     data-search="{{ \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($g['name'])) }}"
                     aria-selected="{{ $dangChon === $g['id'] ? 'true' : 'false' }}">
                     <span class="gvp-av">
@@ -87,6 +93,7 @@
             @endforeach
         </ul>
         <div class="gvp-empty" id="gvpEmpty">Không tìm thấy giảng viên.</div>
+        <div class="gvp-hint" id="gvpHint"></div>
     </div>
 </div>
 
@@ -97,25 +104,49 @@
     var list = document.getElementById('gvpList');
     var search = document.getElementById('gvpSearch');
     var empty = document.getElementById('gvpEmpty');
+    var hint = document.getElementById('gvpHint');
     var value = document.getElementById('gvpValue');
     var btnAv = document.getElementById('gvpBtnAv');
     var btnText = document.getElementById('gvpBtnText');
+    var selDanhMuc = document.getElementById('danh_muc');   // ô chọn danh mục ở form
+    var locTheoLinhVuc = root.getAttribute('data-loc') === '1';
+
+    function slugHienTai() { return selDanhMuc ? selDanhMuc.value : ''; }
+
+    // Giảng viên có phụ trách danh mục đang chọn không?
+    function thuocDanhMuc(li) {
+        if (!li.getAttribute('data-id')) return true;          // dòng "Không chọn (gửi chung)" luôn hiện
+        if (!locTheoLinhVuc) return true;                      // chưa có bảng phân công: không lọc
+        var slug = slugHienTai();
+        if (!slug) return false;                               // chưa chọn danh mục: chưa hiện giảng viên nào
+        return (li.getAttribute('data-lv') || '').split(',').indexOf(slug) !== -1;
+    }
 
     function open() { root.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); search.value = ''; filter(''); search.focus(); }
     function close() { root.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
 
     function filter(q) {
         q = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-        var shown = 0;
+        var shownGv = 0;
         list.querySelectorAll('.gvp-item').forEach(function (li) {
-            var ok = !q || li.getAttribute('data-search').indexOf(q) !== -1;
+            var ok = thuocDanhMuc(li) && (!q || li.getAttribute('data-search').indexOf(q) !== -1);
             li.style.display = ok ? '' : 'none';
-            if (ok) shown++;
+            if (ok && li.getAttribute('data-id')) shownGv++;
         });
-        empty.style.display = shown ? 'none' : 'block';
+
+        empty.style.display = 'none';
+        hint.style.display = 'none';
+        if (locTheoLinhVuc && !slugHienTai()) {
+            hint.textContent = 'Hãy chọn danh mục trước để xem giảng viên phụ trách lĩnh vực đó.';
+            hint.style.display = 'block';
+        } else if (!shownGv) {
+            empty.textContent = q ? 'Không tìm thấy giảng viên.' : 'Chưa có giảng viên nào phụ trách danh mục này. Bạn có thể gửi chung.';
+            empty.style.display = 'block';
+        }
     }
 
-    function choose(li) {
+    // Hiển thị lựa chọn lên nút (không đóng danh sách)
+    function apply(li) {
         var id = li.getAttribute('data-id');
         value.value = id;
         btnText.textContent = li.getAttribute('data-name');
@@ -138,8 +169,17 @@
                 btnAv.appendChild(img);
             }
         }
-        close();
-        btn.focus();
+    }
+
+    function choose(li) { apply(li); close(); btn.focus(); }
+
+    // Đổi danh mục: nếu giảng viên đang chọn không phụ trách danh mục mới thì quay về "Không chọn (gửi chung)"
+    function dongBoTheoDanhMuc() {
+        var dangChon = list.querySelector('.gvp-item[aria-selected="true"]');
+        if (dangChon && !thuocDanhMuc(dangChon)) {
+            apply(list.querySelector('.gvp-item[data-id=""]'));
+        }
+        filter(search.value);
     }
 
     btn.addEventListener('click', function () { root.classList.contains('open') ? close() : open(); });
@@ -147,5 +187,8 @@
     list.addEventListener('click', function (e) { var li = e.target.closest('.gvp-item'); if (li) choose(li); });
     document.addEventListener('click', function (e) { if (!root.contains(e.target)) close(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    if (selDanhMuc) selDanhMuc.addEventListener('change', dongBoTheoDanhMuc);
+
+    dongBoTheoDanhMuc();   // chạy một lần khi tải trang (trường hợp form quay lại kèm dữ liệu cũ)
 })();
 </script>
